@@ -1,43 +1,65 @@
-'use strict';
+const americanOnly = require('./american-only.js');
+const americanToBritishSpelling = require('./american-to-british-spelling.js');
+const americanToBritishTitles = require("./american-to-british-titles.js")
+const americanDict={...americanToBritishSpelling,...americanOnly,...americanToBritishTitles};
+const britishOnly = require('./british-only.js')
+var revAmericanDict = {};
+for(var key in americanDict){
+    revAmericanDict[americanDict[key]] = key;
+}
+    let reply="";
+    let sent=""
+    let timeAm=/[0-9]{2}:[0-9]{2}/
+    let timeExp=/[0-9]{2}.[0-9]{2}/
+    let count=0
+const britishDict={...revAmericanDict,...britishOnly};
+class Translator {
+  wrap(text){
+    return '<span class="highlight">'+text+"</span>"
+  }
+  bTa(str){
+    reply="";
+    count=0
+    sent=str.split(" ");
+    sent.map((word,id)=>{
+      if(britishDict[word]){
+        count++
+        word=this.wrap(britishDict[word])
+      }
+       sent[id]=word;
+    })
+    sent.forEach((word)=>{
+      reply=reply+" "+word;
+    })
+     reply.trim();
+    if(count==0){
+    reply= "Everything looks good to me!"
+    }
+    console.log(str+"\ntranslated to american: "+reply)
+     return reply;
+  }
+  aTb(str){
+    reply="";
+    count=0
+    sent=str.split(" ");
+    sent.map((word,id)=>{
+     if(americanDict[word]){
+        count++
+        word=this.wrap(americanDict[word])
+      }
+       sent[id]=word;
+    })
+    sent.forEach((word)=>{
+      reply=reply+" "+word;
+    })
+    reply.trim();
+    if(count==0){
+      reply = "Everything looks good to me!"
+    }
+        console.log(str+"\ntranslated to british: "+reply)
 
-const Translator = require('../components/translator.js');
+    return reply   
+  }
+}
 
-module.exports = function (app) {
-  
-  const translator = new Translator();
-  
-  app.route('/api/translate')
-    .post((req, res) => {
-      const locale=req.body.locale;
-      const text=req.body.text;
-      let ans="";
-      let trans=""
-      if(!text || !locale){
-        ans={ error: 'Required field(s) missing' }
-      }
-      if(text==''){
-        ans={ error: 'No text to translate' }
-      }
-      else if(locale!="american-to-british" && locale!="british-to-american"){
-        ans={ error: 'Invalid value for locale field' }
-      }
-      else{      
-      switch(locale){
-        case "american-to-british":
-        {
-          trans=translator.aTb(text)
-          ans={text:text,translation:trans}
-        }
-        case "british-to-american":
-        {
-          trans=translator.bTa(text)
-          ans={text:text,translation:trans}
-        }
-        default:
-        {
-          ans={ error: 'Invalid value for locale field' }
-        }
-      }}
-      res.json(ans);        
-    });
-};
+module.exports = Translator;
